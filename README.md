@@ -16,7 +16,10 @@ RedisQueue = require("simple-redis-queue");
 myQueue = new RedisQueue(redisCon);
 
 // Publish to the queue
-myQueue.push("queueName", "body string or object");
+myQueue.push("queueName", "body string or object", function(err, reply){
+    console.log(err);
+    console.log("current queue size : " + reply);
+});
 
 // Listen for new messages
 myQueue.on("message", function (queueName, payload) {
