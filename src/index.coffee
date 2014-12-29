@@ -5,10 +5,16 @@ class RedisQueueError extends Error
 class RedisQueue extends events.EventEmitter
   constructor: (@conn) ->
 
+  next: (keysToMonitor...) ->
+    @pop(false, keysToMonitor...)
+
   push: (type, payload, callback) ->
     @conn.lpush type, JSON.stringify(payload), callback
 
   monitor: (keysToMonitor...) ->
+    @pop(true, keysToMonitor...)
+
+  pop: (is_async, keysToMonitor...) ->
     @conn.brpop keysToMonitor..., 0, (err, replies) =>
       try
         return @emit("error", err) if err?
@@ -16,7 +22,8 @@ class RedisQueue extends events.EventEmitter
 
         @emit "message", replies[0], replies[1]
       finally
-        @monitor(keysToMonitor...)
+        if is_async
+          @pop(true, keysToMonitor...)
 
   clear: (keysToClear...) ->
     @conn.del keysToClear...
